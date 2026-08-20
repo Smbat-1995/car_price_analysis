@@ -30,7 +30,7 @@ def get_hrefs(cars):
         hrefs1 = [list_am_main + link['href'] for link in normal_links.find_all('a',attrs={'class':"class"})]
         hrefs = hrefs + hrefs1
     else:
-        hrefs = [list_am_main + link['href'] for link in cars.find_all('a',attrs={'class':"class"})]
+        hrefs = [list_am_main + link['href'] for link in cars[0].find_all('a',attrs={'class':"class"})]
     return hrefs
 
 def get_specific_car_content(href):
@@ -85,7 +85,8 @@ def get_seller_id(car_soup):
 
 def get_car_price(car_soup):
     element = car_soup.find('span', class_='price x')
-    return element.text.strip()
+    if element:
+        return element.text.strip()
 
 def get_add_info(car_soup):
 
@@ -166,7 +167,7 @@ db_port = os.getenv('DB_PORT', '5432')
 db_name = os.getenv('DB_NAME')
 
 # 3. Create the SQLAlchemy engine for PostgreSQL
-connection_string = f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+connection_string = f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require'
 engine = create_engine(connection_string)
 
 

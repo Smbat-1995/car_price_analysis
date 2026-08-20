@@ -12,6 +12,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from sqlalchemy import create_engine
 import time
+import os
+from dotenv import load_dotenv
 
 
 # In[2]:
@@ -265,14 +267,15 @@ df['scrape_date'] = pd.to_datetime(datetime.today())
 
 
 # 2. Define your PostgreSQL credentials
-db_user = 'postgres'
-db_password = 'postgres'
-db_host = 'localhost'       # Use your server IP if it is not hosted locally
-db_port = '5432'            # 5432 is the default PostgreSQL port
-db_name = 'car_db'
+load_dotenv()
+db_user = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST', 'localhost')
+db_port = os.getenv('DB_PORT', '5432')
+db_name = os.getenv('DB_NAME')
 
 # 3. Create the SQLAlchemy engine for PostgreSQL
-connection_string = f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+connection_string = f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require'
 engine = create_engine(connection_string)
 
 
