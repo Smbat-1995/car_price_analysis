@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
-
-
 import requests
 import pandas as pd
 from datetime import datetime
@@ -16,37 +12,16 @@ import os
 from dotenv import load_dotenv
 
 
-# In[2]:
-
-
-auto_am_main = 'https://auto.am/'
+auto_am_main = 'https://auto.am'
 
 auto_am_url = f'{auto_am_main}'+"""search/passenger-cars?q={%22category%22:%221%22,%22page%22:%221%22,%22sort%22:%22latest%22,%22layout%22:%22list%22,%22user%22:{%22dealer%22:%220%22,%22official%22:%220%22,%22id%22:%22%22},%22make%22:[%22246%22],%22model%22:{%22246%22:[%22490%22,%224043%22,%224044%22,%222957%22,%224045%22,%221974%22,%221975%22,%224046%22,%225186%22,%221976%22,%225554%22,%221972%22,%223590%22]},%22year%22:{%22gt%22:%222012%22,%22lt%22:%222017%22},%22usdprice%22:{%22gt%22:%220%22,%22lt%22:%22100000000%22},%22custcleared%22:%221%22,%22mileage%22:{%22gt%22:%220%22,%22lt%22:%221000000%22}}"""
 list_am_url = """https://www.list.am/category/1472?n=0&cmtype=&bid=49&mid=957%2C3284&crc=&price1=&price2=&_a27=0&_a2_1=2013&_a2_2=2017&_a15=&_a28_1=&_a28_2=&_a207_1=&_a207_2=&_a13=&_a23=&_a1_1=&_a1_2=&_a109=&_a43=&_a16=&_a17=&_a197=&_a22=0&_a105=&_a106=&_a102=0&_a101=&_a103=&_a104="""
-
-
-# In[ ]:
-
-
-
-
-
-# In[3]:
 
 
 def open_url(url):
     driver = webdriver.Edge()
     driver.get(url)
     return driver
-
-
-# In[4]:
-
-
-driver = open_url(auto_am_main)
-
-
-# In[5]:
 
 
 def select_mark():
@@ -57,9 +32,6 @@ def select_mark():
     time.sleep(2)
 
 
-# In[6]:
-
-
 def select_model():
     driver.find_element(By.ID,'select2-v-model-container').find_element(By.CLASS_NAME , 'select2-selection__placeholder').click()
     driver.find_element(By.CLASS_NAME, 'select2-search__field').send_keys('CLS')
@@ -68,54 +40,30 @@ def select_model():
     time.sleep(2)
 
 
-# In[7]:
-
 
 def select_start_year():
-    driver.find_element(By.XPATH, '/html/body/section[1]/div/div[2]/div/div/div/div[3]/label[1]/span/span[1]/span/span[1]').click()
+    driver.find_element(By.XPATH, '/html/body/section[1]/div/div[2]/div/div/div/div[1]/div[3]/label[1]/span/span[1]/span/span[1]').click()                                    
     driver.find_element(By.CLASS_NAME, 'select2-search__field').send_keys('2012')
     time.sleep(2)
     driver.find_element(By.CLASS_NAME, 'select2-results__options').click()
     time.sleep(2)
 
-
-# In[8]:
-
-
 def select_end_year():
-    driver.find_element(By.XPATH, '/html/body/section[1]/div/div[2]/div/div/div/div[3]/label[2]/span/span[1]/span/span[1]').click()
+    driver.find_element(By.XPATH, '/html/body/section[1]/div/div[2]/div/div/div/div[1]/div[3]/label[2]/span/span[1]/span/span[1]').click()
     driver.find_element(By.CLASS_NAME, 'select2-search__field').send_keys('2017')
     time.sleep(2)
     driver.find_element(By.CLASS_NAME, 'select2-results__options').click()
     time.sleep(2)
 
 
-# In[9]:
-
-
 def duty_free():
     driver.find_element(By.XPATH, '/html/body/section[1]/div/div[2]/div/div/div/div[6]/div[1]/label/span').click()
 
-
-# In[10]:
 
 
 def search():
     driver.find_element(By.ID,'search-btn').click()
 
-
-# In[11]:
-
-
-select_mark()
-select_model()
-select_start_year()
-select_end_year()
-duty_free()
-search()
-
-
-# In[12]:
 
 
 def get_content():
@@ -150,7 +98,7 @@ def get_car_vin(car_soup):
         return
 
 def get_car_year(car_soup):
-    return car_soup.find('a',attrs={'class':"grey-text"}).text
+    return #car_soup.find('a',attrs={'class':"grey-text"}).text
 
 def get_car_metadata(car_soup):
     metadata_html = car_soup.find('tbody')
@@ -180,29 +128,26 @@ def get_add_info(car_soup):
 
 def get_car_seller_phone(car_soup):
     try:
-        return car_soup.find('a' , attrs={'id':"callBtnOptional1"}).text.strip()
+        return car_soup.find('a' , attrs={'id':"callBtnOptional"}).text.strip()
     except:
-        return car_soup.find('a' , attrs={'id':"callBtn1"}).text.strip()
+        return car_soup.find('a' , attrs={'id':"callBtn"}).text.strip()
 
 def get_car_price(car_soup):
-    return car_soup.find('span',attrs={'class':"fnum"}).text.replace(' ','')
+    return #car_soup.find('span',attrs={'class':"fnum"}).text.replace(' ','')
 
-
-# In[13]:
-
-
+driver = open_url(auto_am_main)
+select_mark()
+select_model()
+select_start_year()
+select_end_year()
+#duty_free()
+search()
 soup = get_content()
 cars = get_cars(soup)
 hrefs = get_hrefs(cars)
 
 
-# In[14]:
-
-
 print(f'Found {len(hrefs)} cars')
-
-
-# In[15]:
 
 
 final_data = {
@@ -229,6 +174,7 @@ final_data = {
     'Link':[]}
 count = 0
 for href in hrefs:
+    print(href)
     car_soup = get_specific_car_content(href)
     car_name = get_car_name(car_soup)
     year = get_car_year(car_soup)
@@ -251,19 +197,8 @@ for href in hrefs:
             final_data[key].append(None)
 
 
-# In[16]:
-
-
 df = pd.DataFrame(final_data)
-
-
-# In[17]:
-
-
 df['scrape_date'] = pd.to_datetime(datetime.today())
-
-
-# In[18]:
 
 
 # 2. Define your PostgreSQL credentials
@@ -278,10 +213,6 @@ db_name = os.getenv('DB_NAME')
 connection_string = f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require'
 engine = create_engine(connection_string)
 
-
-# In[19]:
-
-
 # 4. Append the data to the table
 df.to_sql(
     name='auto_am_listings', 
@@ -291,4 +222,3 @@ df.to_sql(
 )
 
 print(f"Successfully appended {len(df)} rows to PostgreSQL for {df['scrape_date'].iloc[0]}")
-
