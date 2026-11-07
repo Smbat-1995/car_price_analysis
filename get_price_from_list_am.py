@@ -2,8 +2,6 @@
 # coding: utf-8
 
 # In[1]:
-
-
 import pandas as pd
 from datetime import datetime
 from bs4 import BeautifulSoup

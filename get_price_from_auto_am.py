@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from sqlalchemy import create_engine
 import time
@@ -19,7 +20,12 @@ list_am_url = """https://www.list.am/category/1472?n=0&cmtype=&bid=49&mid=957%2C
 
 
 def open_url(url):
-    driver = webdriver.Edge()
+    options = Options()
+    options.add_argument('--headless=new')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    driver = webdriver.Chrome(options=options)
     driver.get(url)
     return driver
 
@@ -79,9 +85,17 @@ def get_cars(soup):
     cars = search_results.find_all('div',attrs  = {'class':'card'})
     return cars
 
-def get_hrefs(cars):
-    hrefs = [auto_am_main + car.find('a', attrs={'class':"click-for-gtag"})['href']  for car in cars]
-    return hrefs
+def get_data_from_card_data(cars):
+    data = {}
+    for car in cars:
+        a_tag = car.find('a', attrs={'class':"click-for-gtag"})
+        href = auto_am_main + a_tag['href']
+        price = a_tag['data-price']
+        card_main = car.find('div', attrs={'class':"ac-main"})
+        card_main_data = card_main.find('a').find('div',attrs ={'class':'ac-head'})
+        year = card_main_data.find('h3').find('span' , attrs = {'class':'ac-year'}).text
+        data[href] = {'price':price , 'year':year}
+    return data
 
 def get_specific_car_content(href):
     html = requests.get(href).text
@@ -96,9 +110,6 @@ def get_car_vin(car_soup):
         return car_soup.find('div',attrs={'class':"pad-left-6"}).text.strip()
     except:
         return
-
-def get_car_year(car_soup):
-    return #car_soup.find('a',attrs={'class':"grey-text"}).text
 
 def get_car_metadata(car_soup):
     metadata_html = car_soup.find('tbody')
@@ -132,8 +143,6 @@ def get_car_seller_phone(car_soup):
     except:
         return car_soup.find('a' , attrs={'id':"callBtn"}).text.strip()
 
-def get_car_price(car_soup):
-    return #car_soup.find('span',attrs={'class':"fnum"}).text.replace(' ','')
 
 driver = open_url(auto_am_main)
 select_mark()
@@ -144,13 +153,14 @@ select_end_year()
 search()
 soup = get_content()
 cars = get_cars(soup)
-hrefs = get_hrefs(cars)
+hrefs = get_data_from_card_data(cars)
 
 
 print(f'Found {len(hrefs)} cars')
 
 
 final_data = {
+    'car_id':[],
     'car_name': [],
     'year': [],
     'add_info': [],
@@ -177,18 +187,17 @@ for href in hrefs:
     print(href)
     car_soup = get_specific_car_content(href)
     car_name = get_car_name(car_soup)
-    year = get_car_year(car_soup)
     metadata = get_car_metadata(car_soup)
     vin = get_car_vin(car_soup)
     add_info = get_add_info(car_soup)
     phone = get_car_seller_phone(car_soup)
-    price = get_car_price(car_soup)
     final_data['car_name'].append(car_name) 
-    final_data['year'].append(year) 
-    final_data['price'].append(price) 
+    final_data['year'].append(hrefs[href]['year']) 
+    final_data['price'].append(hrefs[href]['price']) 
     final_data['add_info'].append(add_info)
     final_data['phone'].append(phone)
     final_data['Link'].append(href)
+    final_data['car_id'].append(href.split('offer/')[-1])
     for data in metadata:
         final_data[data].append(metadata[data])
     count += 1
@@ -199,7 +208,6 @@ for href in hrefs:
 
 df = pd.DataFrame(final_data)
 df['scrape_date'] = pd.to_datetime(datetime.today())
-
 
 # 2. Define your PostgreSQL credentials
 load_dotenv()
