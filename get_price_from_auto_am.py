@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import uuid
 import requests
 import pandas as pd
 from datetime import datetime
@@ -20,12 +21,12 @@ list_am_url = """https://www.list.am/category/1472?n=0&cmtype=&bid=49&mid=957%2C
 
 
 def open_url(url):
-    options = Options()
-    options.add_argument('--headless=new')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    driver = webdriver.Chrome(options=options)
+    # options = Options()
+    # options.add_argument('--headless=new')
+    # options.add_argument('--no-sandbox')
+    # options.add_argument('--disable-dev-shm-usage')
+    # options.add_argument('--window-size=1920,1080')
+    driver = webdriver.Chrome()#options=options
     driver.get(url)
     return driver
 
@@ -90,10 +91,10 @@ def get_data_from_card_data(cars):
     for car in cars:
         a_tag = car.find('a', attrs={'class':"click-for-gtag"})
         href = auto_am_main + a_tag['href']
-        price = a_tag['data-price']
-        card_main = car.find('div', attrs={'class':"ac-main"})
-        card_main_data = card_main.find('a').find('div',attrs ={'class':'ac-head'})
-        year = card_main_data.find('h3').find('span' , attrs = {'class':'ac-year'}).text
+        main_div = car.find('div', attrs={'class':"ac-main"})
+        head = main_div.find('div',attrs = {'class':'ac-head'})
+        price = head.find('div' ,attrs={'class':'ac-price'}).text.strip()
+        year = head.find('h3').find('span',attrs={'class':'ac-year'}).text.strip()
         data[href] = {'price':price , 'year':year}
     return data
 
@@ -160,8 +161,9 @@ print(f'Found {len(hrefs)} cars')
 
 
 final_data = {
-    'car_id':[],
+    'post_id':[],
     'car_name': [],
+    'vin':[],
     'year': [],
     'add_info': [],
     'phone': [],
@@ -192,12 +194,14 @@ for href in hrefs:
     add_info = get_add_info(car_soup)
     phone = get_car_seller_phone(car_soup)
     final_data['car_name'].append(car_name) 
+    final_data['vin'].append(vin) 
     final_data['year'].append(hrefs[href]['year']) 
     final_data['price'].append(hrefs[href]['price']) 
     final_data['add_info'].append(add_info)
     final_data['phone'].append(phone)
     final_data['Link'].append(href)
-    final_data['car_id'].append(href.split('offer/')[-1])
+    final_data['post_id'].append(href.split('offer/')[-1])
+
     for data in metadata:
         final_data[data].append(metadata[data])
     count += 1
@@ -208,6 +212,7 @@ for href in hrefs:
 
 df = pd.DataFrame(final_data)
 df['scrape_date'] = pd.to_datetime(datetime.today())
+df['batch_id'] = str(uuid.uuid4())
 
 # 2. Define your PostgreSQL credentials
 load_dotenv()
